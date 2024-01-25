@@ -1,0 +1,63 @@
+#!/usr/bin/env nsh
+/*
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * You may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+ @Codebase(group='org.sorcer', module='helicoptertaxi', version='${sorcer.version}', classifier='dl')
+ import pl.edu.pjatk.sso.helicoptertaxi.LocateHelicopter
+ import pl.edu.pjatk.sso.helicoptertaxi.FlightOrder
+ import pl.edu.pjatk.sso.helicoptertaxi.OrderConfirmation
+ import pl.edu.pjatk.sso.helicoptertaxi.FlightRate
+
+ // find, find closest free helicopter based on latitude/longitude and return closest helicopter_id
+ Task find = task("find",
+         sig("findClosestFreeHelicopter", LocateHelicopter.class),
+         context("findClosestFreeHelicopter", inVal("lat/latitude"), inVal("long/longitude"),
+                 outVal("helicopter/helicopter_id")));
+
+ // order_create, create order with helicopter_id on specific time to arrive and return order_id
+ Task order_create = task("order_create",
+         sig("create", FlightOrder.class),
+         context("create", inVal("helicopter/helicopter_id"), inVal("schedule/time"),
+                 outVal("order/order_id")));
+
+ // order_confirm, confirm order, change status to confirm
+ Task order_confirm = task("order_confirm",
+         sig("confirm", OrderConfirmation.class),
+         context("confirm", inVal("order/order_id"), inVal("check/confirmation"),
+                 outVal("status/order_status")));
+
+ // order_pay, pay for order with specific amount of money, return payment_confirmation
+ Task order_pay = task("order_pay",
+         sig("pay", FlightOrder.class),
+         context("pay", inVal("order/order_id"), inVal("charge/money"),
+                 outVal("payment/payment_confirmation")));
+
+ // order_rate, add rating for order as number and return rating
+ Task order_rate = task("order_rate",
+         sig("addRating", FlightRate.class),
+         context("addRating", inVal("arg/order_id"), inVal("arg/rate"),
+                 outVal("result/rating")));
+
+ Job job = ("helicopter_flight",
+         job("finding", find),
+         job("order_create", order_create),
+         job("order_finish", order_confirm,order_pay, order_rate),
+         pipe(outPoint(find, "helicopter/helicopter_id"), inPoint(order_create, "helicopter/helicopter_id")),
+         pipe(outPoint(order_create, "order/order_id"), inPoint(order_confirm, "order/order_id")),
+         pipe(outPoint(order_create, "order/order_id"), inPoint(order_pay, "order/order_id")),
+         pipe(outPoint(order_create, "order/order_id"), inPoint(order_rate, "order/order_id")));
+
+Context context = upcontext(exert(job));
+
+assertTrue(value(context, "helicopter_flight/order_rate/result/rating").equals(true));
