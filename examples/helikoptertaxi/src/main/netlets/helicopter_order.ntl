@@ -1,6 +1,5 @@
 #!/usr/bin/env nsh
 /*
- * SORCER Script for Legal Consultation Service with Data Piping in Service Composition
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * You may not use this file except in compliance with the License.
@@ -14,9 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- @Codebase(group='org.sorcer', module='legalconsultation', version='${sorcer.version}', classifier='dl')
+ @Codebase(group='org.sorcer', module='helicoptertaxi', version='${sorcer.version}', classifier='dl')
+ import pl.edu.pjatk.sso.helicoptertaxi.LocateHelicopter
+ import pl.edu.pjatk.sso.helicoptertaxi.FlightOrder
+ import pl.edu.pjatk.sso.helicoptertaxi.OrderConfirmation
+ import pl.edu.pjatk.sso.helicoptertaxi.FlightRate
 
- // find, find closest free helicopter based on latitude/longitude and return closese helicopter_id
+ // find, find closest free helicopter based on latitude/longitude and return closest helicopter_id
  Task find = task("find",
          sig("findClosestFreeHelicopter", LocateHelicopter.class),
          context("findClosestFreeHelicopter", inVal("lat/latitude"), inVal("long/longitude"),
